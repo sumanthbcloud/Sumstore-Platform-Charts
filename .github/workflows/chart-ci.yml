@@ -1,0 +1,125 @@
+name: Chart CI & OCI Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'charts/**'
+      - 'tests/**'
+      - '.github/workflows/chart-ci.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'charts/**'
+      - 'tests/**'
+      - '.github/workflows/chart-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  lint-and-validate:
+    name: Lint & Validate Chart
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Set Up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+
+      - name: Helm Lint
+        run: |
+          echo "Linting charts/microservice..."
+          helm lint charts/microservice
+
+      - name: Validate Schema & Templates
+        run: |
+          echo "Validating HTTP Service fixture..."
+          helm lint charts/microservice -f tests/fixtures/http-service.yaml
+          helm template test-http charts/microservice -f tests/fixtures/http-service.yaml > /dev/null
+
+          echo "Validating Worker Service fixture..."
+          helm lint charts/microservice -f tests/fixtures/worker-service.yaml
+          helm template test-worker charts/microservice -f tests/fixtures/worker-service.yaml > /dev/null
+
+          echo "Validating Web Service fixture..."
+          helm lint charts/microservice -f tests/fixtures/web-service.yaml
+          helm template test-web charts/microservice -f tests/fixtures/web-service.yaml > /dev/null
+
+          echo "All representative fixtures validated successfully."
+
+  release-chart:
+    name: Package & Publish OCI Chart
+    needs: lint-and-validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Set Up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Extract Chart Version
+        id: chart-meta
+        run: |
+          CHART_VERSION=$(grep '^version:' charts/microservice/Chart.yaml | awk '{print $2}')
+          CHART_NAME=$(grep '^name:' charts/microservice/Chart.yaml | awk '{print $2}')
+          echo "version=${CHART_VERSION}" >> $GITHUB_OUTPUT
+          echo "name=${CHART_NAME}" >> $GITHUB_OUTPUT
+          echo "Chart: ${CHART_NAME}, Version: ${CHART_VERSION}"
+
+      - name: Check ECR Immutable Version Existence
+        id: ecr-check
+        run: |
+          CHART_VERSION="${{ steps.chart-meta.outputs.version }}"
+          REPO_NAME="sumstore/charts/${{ steps.chart-meta.outputs.name }}"
+          
+          echo "Checking if ${REPO_NAME}:${CHART_VERSION} already exists in Amazon ECR..."
+          if LOOKUP_OUTPUT=$(aws ecr batch-get-image \
+            --repository-name "${REPO_NAME}" \
+            --image-ids imageTag="${CHART_VERSION}" 2>&1); then
+            IMAGE_COUNT=$(echo "$LOOKUP_OUTPUT" | jq -r ".images | length")
+            if [ "$IMAGE_COUNT" -gt 0 ]; then
+              echo "ERROR: Version ${CHART_VERSION} is already published and immutable. Bumping version is required."
+              exit 1
+            fi
+          fi
+          echo "Version ${CHART_VERSION} is not yet published. Proceeding with packaging."
+
+      - name: Package & Push OCI Chart
+        run: |
+          REGISTRY="961544628309.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com"
+          CHART_VERSION="${{ steps.chart-meta.outputs.version }}"
+          CHART_NAME="${{ steps.chart-meta.outputs.name }}"
+
+          echo "Logging into Helm OCI registry..."
+          aws ecr get-login-password --region "${{ vars.AWS_REGION }}" | \
+            helm registry login --username AWS --password-stdin "${REGISTRY}"
+
+          mkdir -p .dist
+          echo "Packaging chart..."
+          helm package charts/microservice -d .dist
+
+          echo "Pushing OCI package to oci://${REGISTRY}/sumstore/charts..."
+          helm push ".dist/${CHART_NAME}-${CHART_VERSION}.tgz" "oci://${REGISTRY}/sumstore/charts"
+
+          echo "Verifying published OCI artifact..."
+          aws ecr describe-images \
+            --repository-name "sumstore/charts/${CHART_NAME}" \
+            --image-ids imageTag="${CHART_VERSION}"

@@ -1,0 +1,89 @@
+{{- $portEnabled := true -}}
+{{- if and .Values.containerPort (hasKey .Values.containerPort "enabled") -}}
+  {{- $portEnabled = .Values.containerPort.enabled -}}
+{{- else if and .Values.container (hasKey .Values.container "portEnabled") -}}
+  {{- $portEnabled = .Values.container.portEnabled -}}
+{{- else if and .Values.container (hasKey .Values.container "enabled") -}}
+  {{- $portEnabled = .Values.container.enabled -}}
+{{- end -}}
+{{- $port := 8080 -}}
+{{- if and .Values.containerPort (hasKey .Values.containerPort "port") -}}
+  {{- $port = .Values.containerPort.port -}}
+{{- else if and .Values.container (hasKey .Values.container "port") -}}
+  {{- $port = .Values.container.port -}}
+{{- end -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "microservice.fullname" . }}
+  labels:
+    {{- include "microservice.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "microservice.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "microservice.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "microservice.serviceAccountName" . }}
+      containers:
+        - name: {{ include "microservice.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+          {{- if $portEnabled }}
+          ports:
+            - name: http
+              containerPort: {{ $port }}
+              protocol: TCP
+          {{- end }}
+          {{- if or .Values.config .Values.existingSecret }}
+          envFrom:
+            {{- if .Values.config }}
+            - configMapRef:
+                name: {{ include "microservice.fullname" . }}
+            {{- end }}
+            {{- if .Values.existingSecret }}
+            - secretRef:
+                name: {{ .Values.existingSecret }}
+            {{- end }}
+          {{- end }}
+          {{- if and .Values.probes .Values.probes.startup .Values.probes.startup.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.probes.startup.path | default "/health" }}
+              port: {{ .Values.probes.startup.port | default $port }}
+            initialDelaySeconds: {{ .Values.probes.startup.initialDelaySeconds | default 0 }}
+            periodSeconds: {{ .Values.probes.startup.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds | default 1 }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold | default 30 }}
+            successThreshold: {{ .Values.probes.startup.successThreshold | default 1 }}
+          {{- end }}
+          {{- if and .Values.probes .Values.probes.readiness .Values.probes.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readiness.path | default "/health" }}
+              port: {{ .Values.probes.readiness.port | default $port }}
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds | default 5 }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds | default 1 }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold | default 3 }}
+            successThreshold: {{ .Values.probes.readiness.successThreshold | default 1 }}
+          {{- end }}
+          {{- if and .Values.probes .Values.probes.liveness .Values.probes.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.liveness.path | default "/health" }}
+              port: {{ .Values.probes.liveness.port | default $port }}
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds | default 10 }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds | default 1 }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold | default 3 }}
+            successThreshold: {{ .Values.probes.liveness.successThreshold | default 1 }}
+          {{- end }}
+          {{- if .Values.resources }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- end }}

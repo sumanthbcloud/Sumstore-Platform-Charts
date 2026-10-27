@@ -1,0 +1,17 @@
+apiVersion: v2
+name: microservice
+description: Enterprise reusable Helm chart for SUM Store microservices
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - microservice
+  - e-commerce
+  - platform
+  - sumstore
+home: https://github.com/sumanthbcloud/Sumstore-Platform-Charts
+sources:
+  - https://github.com/sumanthbcloud/Sumstore-Platform-Charts
+maintainers:
+  - name: Platform Engineering Team
+    email: platform@sumstore.internal

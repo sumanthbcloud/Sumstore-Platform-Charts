@@ -1,0 +1,13 @@
+1. Application {{ include "microservice.fullname" . }} has been successfully deployed.
+
+Chart Version: {{ .Chart.Version }}
+Service Account: {{ include "microservice.serviceAccountName" . }}
+
+{{- if .Values.service.enabled }}
+Service is enabled:
+  Type: {{ .Values.service.type }}
+  Port: {{ .Values.service.port }}
+  DNS: {{ include "microservice.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+{{- else }}
+Service is disabled (background worker or non-networked workload).
+{{- end }}
