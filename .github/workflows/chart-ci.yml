@@ -96,10 +96,12 @@ jobs:
             --image-ids imageTag="${CHART_VERSION}" 2>&1); then
             IMAGE_COUNT=$(echo "$LOOKUP_OUTPUT" | jq -r ".images | length")
             if [ "$IMAGE_COUNT" -gt 0 ]; then
-              echo "ERROR: Version ${CHART_VERSION} is already published and immutable. Bumping version is required."
-              exit 1
+              echo "Immutable chart version ${CHART_VERSION} already exists in Amazon ECR. Skipping push."
+              echo "exists=true" >> $GITHUB_OUTPUT
+              exit 0
             fi
           fi
+          echo "exists=false" >> $GITHUB_OUTPUT
           echo "Version ${CHART_VERSION} is not yet published. Proceeding with packaging."
 
       - name: Package & Push OCI Chart
@@ -107,17 +109,22 @@ jobs:
           REGISTRY="961544628309.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com"
           CHART_VERSION="${{ steps.chart-meta.outputs.version }}"
           CHART_NAME="${{ steps.chart-meta.outputs.name }}"
+          ALREADY_EXISTS="${{ steps.ecr-check.outputs.exists }}"
 
-          echo "Logging into Helm OCI registry..."
-          aws ecr get-login-password --region "${{ vars.AWS_REGION }}" | \
-            helm registry login --username AWS --password-stdin "${REGISTRY}"
+          if [ "$ALREADY_EXISTS" = "true" ]; then
+            echo "Chart ${CHART_NAME}:${CHART_VERSION} is already published. Verifying existing artifact in ECR..."
+          else
+            echo "Logging into Helm OCI registry..."
+            aws ecr get-login-password --region "${{ vars.AWS_REGION }}" | \
+              helm registry login --username AWS --password-stdin "${REGISTRY}"
 
-          mkdir -p .dist
-          echo "Packaging chart..."
-          helm package charts/microservice -d .dist
+            mkdir -p .dist
+            echo "Packaging chart..."
+            helm package charts/microservice -d .dist
 
-          echo "Pushing OCI package to oci://${REGISTRY}/sumstore/charts..."
-          helm push ".dist/${CHART_NAME}-${CHART_VERSION}.tgz" "oci://${REGISTRY}/sumstore/charts"
+            echo "Pushing OCI package to oci://${REGISTRY}/sumstore/charts..."
+            helm push ".dist/${CHART_NAME}-${CHART_VERSION}.tgz" "oci://${REGISTRY}/sumstore/charts"
+          fi
 
           echo "Verifying published OCI artifact..."
           aws ecr describe-images \
