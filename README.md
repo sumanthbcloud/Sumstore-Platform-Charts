@@ -70,7 +70,7 @@ Chart versioning strictly follows Semantic Versioning (`MAJOR.MINOR.PATCH`):
 
 ## 7. How GitOps Consumes a Pinned Version
 
-Workloads in `Sumstore-GitOps` consume the pinned chart version declaratively in `applicationsets/workloads.yaml`:
+Workloads in `Sumstore-GitOps` consume the pinned chart version declaratively in `argocd/workloads.yaml`:
 ```yaml
 spec:
   template:
@@ -83,4 +83,4 @@ spec:
           targetRevision: main
           ref: values
 ```
-When updating chart versions across the platform, update `targetRevision` in `applicationsets/workloads.yaml` to the new released semantic version.
+When updating chart versions across the platform, update `targetRevision` in `argocd/workloads.yaml` to the new released semantic version.
