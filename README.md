@@ -50,6 +50,7 @@ dependencies:
 | `probes.readiness.enabled`| boolean | `false` | Enable/configure readiness probe |
 | `probes.liveness.enabled` | boolean | `false` | Enable/configure liveness probe |
 | `resources` | object | `{}` | Container CPU/memory requests and limits |
+| `extraContainers` | list | `[]` | Optional sidecar containers to run alongside the primary container |
 
 ## 5. Semantic Versioning (SemVer) Policy
 

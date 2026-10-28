@@ -21,7 +21,11 @@
         },
         "pullPolicy": {
           "type": "string",
-          "enum": ["Always", "IfNotPresent", "Never"],
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ],
           "default": "IfNotPresent"
         }
       }
@@ -86,7 +90,11 @@
         },
         "type": {
           "type": "string",
-          "enum": ["ClusterIP", "NodePort", "LoadBalancer"]
+          "enum": [
+            "ClusterIP",
+            "NodePort",
+            "LoadBalancer"
+          ]
         },
         "port": {
           "type": "integer",
@@ -95,8 +103,14 @@
         },
         "targetPort": {
           "oneOf": [
-            { "type": "integer", "minimum": 1, "maximum": 65535 },
-            { "type": "string" }
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            {
+              "type": "string"
+            }
           ]
         }
       }
@@ -115,55 +129,130 @@
         "startup": {
           "type": "object",
           "properties": {
-            "enabled": { "type": "boolean" },
-            "path": { "type": "string" },
+            "enabled": {
+              "type": "boolean"
+            },
+            "path": {
+              "type": "string"
+            },
             "port": {
               "oneOf": [
-                { "type": "integer", "minimum": 1, "maximum": 65535 },
-                { "type": "string" }
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 65535
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
-            "initialDelaySeconds": { "type": "integer", "minimum": 0 },
-            "periodSeconds": { "type": "integer", "minimum": 1 },
-            "timeoutSeconds": { "type": "integer", "minimum": 1 },
-            "failureThreshold": { "type": "integer", "minimum": 1 },
-            "successThreshold": { "type": "integer", "minimum": 1 }
+            "initialDelaySeconds": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "periodSeconds": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "timeoutSeconds": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "failureThreshold": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "successThreshold": {
+              "type": "integer",
+              "minimum": 1
+            }
           }
         },
         "readiness": {
           "type": "object",
           "properties": {
-            "enabled": { "type": "boolean" },
-            "path": { "type": "string" },
+            "enabled": {
+              "type": "boolean"
+            },
+            "path": {
+              "type": "string"
+            },
             "port": {
               "oneOf": [
-                { "type": "integer", "minimum": 1, "maximum": 65535 },
-                { "type": "string" }
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 65535
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
-            "initialDelaySeconds": { "type": "integer", "minimum": 0 },
-            "periodSeconds": { "type": "integer", "minimum": 1 },
-            "timeoutSeconds": { "type": "integer", "minimum": 1 },
-            "failureThreshold": { "type": "integer", "minimum": 1 },
-            "successThreshold": { "type": "integer", "minimum": 1 }
+            "initialDelaySeconds": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "periodSeconds": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "timeoutSeconds": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "failureThreshold": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "successThreshold": {
+              "type": "integer",
+              "minimum": 1
+            }
           }
         },
         "liveness": {
           "type": "object",
           "properties": {
-            "enabled": { "type": "boolean" },
-            "path": { "type": "string" },
+            "enabled": {
+              "type": "boolean"
+            },
+            "path": {
+              "type": "string"
+            },
             "port": {
               "oneOf": [
-                { "type": "integer", "minimum": 1, "maximum": 65535 },
-                { "type": "string" }
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 65535
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
-            "initialDelaySeconds": { "type": "integer", "minimum": 0 },
-            "periodSeconds": { "type": "integer", "minimum": 1 },
-            "timeoutSeconds": { "type": "integer", "minimum": 1 },
-            "failureThreshold": { "type": "integer", "minimum": 1 },
-            "successThreshold": { "type": "integer", "minimum": 1 }
+            "initialDelaySeconds": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "periodSeconds": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "timeoutSeconds": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "failureThreshold": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "successThreshold": {
+              "type": "integer",
+              "minimum": 1
+            }
           }
         }
       }
@@ -174,15 +263,77 @@
         "requests": {
           "type": "object",
           "properties": {
-            "cpu": { "type": "string" },
-            "memory": { "type": "string" }
+            "cpu": {
+              "type": "string"
+            },
+            "memory": {
+              "type": "string"
+            }
           }
         },
         "limits": {
           "type": "object",
           "properties": {
-            "cpu": { "type": "string" },
-            "memory": { "type": "string" }
+            "cpu": {
+              "type": "string"
+            },
+            "memory": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "extraContainers": {
+      "type": "array",
+      "description": "Optional sidecar containers to run alongside the primary container",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "image"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Sidecar container name"
+          },
+          "image": {
+            "type": "string",
+            "description": "Sidecar container image"
+          },
+          "imagePullPolicy": {
+            "type": "string",
+            "enum": [
+              "Always",
+              "IfNotPresent",
+              "Never"
+            ],
+            "default": "IfNotPresent"
+          },
+          "command": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "env": {
+            "type": "array"
+          },
+          "ports": {
+            "type": "array"
+          },
+          "resources": {
+            "type": "object"
+          },
+          "securityContext": {
+            "type": "object"
           }
         }
       }

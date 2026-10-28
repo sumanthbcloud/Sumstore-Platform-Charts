@@ -57,3 +57,24 @@ probes:
     successThreshold: 1
 
 resources: {}
+
+# Optional sidecar containers to run alongside the primary container.
+# Example:
+# extraContainers:
+#   - name: nginx-exporter
+#     image: nginx/nginx-prometheus-exporter:1.4.1
+#     imagePullPolicy: IfNotPresent
+#     ports:
+#       - name: metrics
+#         containerPort: 9113
+#         protocol: TCP
+#     args:
+#       - -nginx.scrape-uri=http://127.0.0.1:8080/nginx_status
+#     resources:
+#       requests:
+#         cpu: 10m
+#         memory: 16Mi
+#       limits:
+#         cpu: 50m
+#         memory: 32Mi
+extraContainers: []
