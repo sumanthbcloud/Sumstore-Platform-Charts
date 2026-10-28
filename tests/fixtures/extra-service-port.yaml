@@ -1,0 +1,33 @@
+replicaCount: 1
+fullnameOverride: web
+
+image:
+  repository: 961544628309.dkr.ecr.us-east-1.amazonaws.com/sumstore/web
+  tag: c439cc37b84709c8e2b21dc50ae804cf349a53c9
+  pullPolicy: IfNotPresent
+
+containerPort:
+  enabled: true
+  port: 8080
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+  extraPorts:
+    - name: metrics
+      port: 9113
+      targetPort: 9113
+      protocol: TCP
+
+config:
+  CATALOGUE_HOST: catalogue
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 250m
+    memory: 128Mi

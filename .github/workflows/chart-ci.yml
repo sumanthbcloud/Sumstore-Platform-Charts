@@ -57,6 +57,10 @@ jobs:
           helm lint charts/microservice -f tests/fixtures/sidecar-service.yaml
           helm template test-sidecar charts/microservice -f tests/fixtures/sidecar-service.yaml > /dev/null
 
+          echo "Validating Extra Service Port fixture..."
+          helm lint charts/microservice -f tests/fixtures/extra-service-port.yaml
+          helm template test-extra-port charts/microservice -f tests/fixtures/extra-service-port.yaml > /dev/null
+
           echo "All representative fixtures validated successfully."
 
   release-chart:

@@ -112,6 +112,55 @@
               "type": "string"
             }
           ]
+        },
+        "extraPorts": {
+          "type": "array",
+          "description": "Optional additional Kubernetes Service ports",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "port"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+                "maxLength": 15,
+                "description": "Port name (lowercase alphanumeric and hyphens, max 15 characters per RFC 6335)"
+              },
+              "port": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535,
+                "description": "Service port number"
+              },
+              "targetPort": {
+                "oneOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65535
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Target port on the pod (port number or container port name)"
+              },
+              "protocol": {
+                "type": "string",
+                "enum": [
+                  "TCP",
+                  "UDP",
+                  "SCTP"
+                ],
+                "default": "TCP",
+                "description": "Port protocol"
+              }
+            },
+            "additionalProperties": false
+          }
         }
       }
     },

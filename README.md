@@ -42,6 +42,7 @@ dependencies:
 | `service.type` | string | `ClusterIP` | Service type |
 | `service.port` | integer | `8080` | Service port |
 | `service.targetPort` | integer/string | `8080` | Service target port |
+| `service.extraPorts` | list | `[]` | Optional additional Kubernetes Service ports (e.g. metrics) |
 | `config` | object | `{}` | Key-value pairs mounted as environment variables via ConfigMap |
 | `existingSecret` | string | `""` | Name of existing Secret to inject via `envFrom` |
 | `serviceAccount.create` | boolean | `false` | Whether to create a ServiceAccount |

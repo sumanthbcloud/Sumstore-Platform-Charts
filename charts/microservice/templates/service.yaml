@@ -1,4 +1,16 @@
 {{- if and .Values.service .Values.service.enabled }}
+{{- $ports := list (int (.Values.service.port | default 8080)) }}
+{{- $names := list "http" }}
+{{- range .Values.service.extraPorts }}
+  {{- if has (int .port) $ports }}
+    {{- fail (printf "duplicate service port '%v' detected in service.extraPorts" .port) }}
+  {{- end }}
+  {{- if has .name $names }}
+    {{- fail (printf "duplicate service port name '%s' detected in service.extraPorts" .name) }}
+  {{- end }}
+  {{- $ports = append $ports (int .port) }}
+  {{- $names = append $names .name }}
+{{- end }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -12,6 +24,12 @@ spec:
       targetPort: {{ .Values.service.targetPort | default .Values.service.port | default 8080 }}
       protocol: TCP
       name: http
+    {{- range .Values.service.extraPorts }}
+    - name: {{ .name }}
+      port: {{ .port }}
+      targetPort: {{ .targetPort | default .port }}
+      protocol: {{ .protocol | default "TCP" }}
+    {{- end }}
   selector:
     {{- include "microservice.selectorLabels" . | nindent 4 }}
 {{- end }}

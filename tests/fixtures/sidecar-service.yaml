@@ -15,6 +15,11 @@ service:
   type: ClusterIP
   port: 8080
   targetPort: 8080
+  extraPorts:
+    - name: metrics
+      port: 9113
+      targetPort: 9113
+      protocol: TCP
 
 config:
   CATALOGUE_HOST: catalogue
