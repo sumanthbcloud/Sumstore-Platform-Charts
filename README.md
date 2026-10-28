@@ -19,13 +19,12 @@ The `microservice` chart is the centralized, standardized Kubernetes deployment 
 
 ## 3. Consumer Model
 
-Workloads consume this chart as a versioned OCI dependency:
+Workloads consume this chart as a versioned OCI Helm artifact via Argo CD multiple sources:
 ```yaml
-dependencies:
-  - name: microservice
-    version: 1.0.0
-    repository: "oci://961544628309.dkr.ecr.us-east-1.amazonaws.com/sumstore/charts"
-    alias: cart
+sources:
+  - repoURL: 961544628309.dkr.ecr.us-east-1.amazonaws.com/sumstore/charts
+    chart: microservice
+    targetRevision: 1.2.0
 ```
 
 ## 4. Values Contract
@@ -71,12 +70,17 @@ Chart versioning strictly follows Semantic Versioning (`MAJOR.MINOR.PATCH`):
 
 ## 7. How GitOps Consumes a Pinned Version
 
-In the umbrella chart (`Sumstore-GitOps/helm/sumstore/Chart.yaml`), update dependencies to pin the released OCI version:
+Workloads in `Sumstore-GitOps` consume the pinned chart version declaratively in `applicationsets/workloads.yaml`:
 ```yaml
-dependencies:
-  - name: microservice
-    version: 1.0.0
-    repository: "oci://961544628309.dkr.ecr.us-east-1.amazonaws.com/sumstore/charts"
-    alias: cart
+spec:
+  template:
+    spec:
+      sources:
+        - repoURL: 961544628309.dkr.ecr.us-east-1.amazonaws.com/sumstore/charts
+          chart: microservice
+          targetRevision: 1.2.0
+        - repoURL: https://github.com/sumanthbcloud/Sumstore-GitOps.git
+          targetRevision: main
+          ref: values
 ```
-Run `helm dependency update` to lock the OCI artifact hash in `Chart.lock`.
+When updating chart versions across the platform, update `targetRevision` in `applicationsets/workloads.yaml` to the new released semantic version.
